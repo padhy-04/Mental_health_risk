@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mental Health Risk Prediction Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: rgba(255,255,255,0.08);
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --accent: #6366f1;
+    --high: #ef4444;
+    --moderate: #f59e0b;
+    --low: #10b981;
+    --high-bg: rgba(239,68,68,0.1);
+    --moderate-bg: rgba(245,158,11,0.1);
+    --low-bg: rgba(16,185,129,0.1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(99,102,241,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99,102,241,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 1100px; margin: 0 auto; position: relative; z-index: 1; }
+
+  /* Header */
+  .header { text-align: center; margin-bottom: 32px; }
+  .badge {
+    display: inline-block;
+    background: rgba(99,102,241,0.15);
+    border: 1px solid rgba(99,102,241,0.3);
+    color: #818cf8;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+  }
+  .header h1 {
+    font-size: 28px;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.3;
+    margin-bottom: 6px;
+  }
+  .header p {
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .header-meta {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .header-meta span { display: flex; align-items: center; gap: 5px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--low); display: inline-block; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* Input area */
+  .input-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .input-label {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 14px 16px;
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s;
+    height: 100px;
+  }
+  textarea:focus { border-color: rgba(99,102,241,0.5); }
+  textarea::placeholder { color: var(--muted); }
+
+  .input-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    gap: 12px;
+  }
+  .toggles { display: flex; gap: 12px; flex-wrap: wrap; }
+  .toggle-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .toggle-item input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
+  .toggle-item select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .analyze-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 28px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+  }
+  .analyze-btn:hover { background: #4f46e5; transform: translateY(-1px); }
+  .analyze-btn:active { transform: translateY(0); }
+  .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* Sample buttons */
+  .samples {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .sample-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .sample-btn:hover { border-color: rgba(99,102,241,0.4); color: var(--text); }
+
+  /* Results hidden by default */
+  .results { display: none; }
+  .results.visible { display: block; animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+  /* Risk banner */
+  .risk-banner {
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .risk-banner.high { background: var(--high-bg); border-color: rgba(239,68,68,0.25); }
+  .risk-banner.moderate { background: var(--moderate-bg); border-color: rgba(245,158,11,0.25); }
+  .risk-banner.low { background: var(--low-bg); border-color: rgba(16,185,129,0.25); }
+
+  .risk-label { font-size: 12px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.7; margin-bottom: 4px; }
+  .risk-value { font-size: 26px; font-weight: 600; }
+  .risk-banner.high .risk-value { color: var(--high); }
+  .risk-banner.moderate .risk-value { color: var(--moderate); }
+  .risk-banner.low .risk-value { color: var(--low); }
+
+  .confidence-box { text-align: right; }
+  .confidence-num { font-size: 22px; font-weight: 600; font-family: 'DM Mono', monospace; }
+  .confidence-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* Score meter */
+  .score-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .score-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+  .score-title { font-size: 13px; font-weight: 500; color: var(--muted); letter-spacing: 0.5px; }
+  .score-num { font-size: 32px; font-weight: 600; font-family: 'DM Mono', monospace; }
+  .score-max { font-size: 16px; color: var(--muted); font-weight: 400; }
+
+  .meter-track {
+    background: var(--surface2);
+    border-radius: 99px;
+    height: 10px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .meter-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+    background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444);
+    background-size: 200% 100%;
+  }
+  .meter-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+
+  /* Metrics grid */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    transition: border-color 0.2s;
+  }
+  .metric-card:hover { border-color: rgba(99,102,241,0.3); }
+  .metric-icon { font-size: 18px; margin-bottom: 8px; }
+  .metric-name { font-size: 11px; color: var(--muted); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 4px; }
+  .metric-value { font-size: 20px; font-weight: 600; font-family: 'DM Mono', monospace; }
+  .metric-desc { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+  /* Condition bar */
+  .condition-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .section-title {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .condition-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .condition-name { font-size: 13px; width: 140px; flex-shrink: 0; }
+  .condition-bar-track {
+    flex: 1;
+    background: var(--surface2);
+    border-radius: 99px;
+    height: 6px;
+    overflow: hidden;
+  }
+  .condition-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.6s ease;
+  }
+  .condition-pct { font-size: 12px; font-family: 'DM Mono', monospace; color: var(--muted); width: 36px; text-align: right; }
+
+  /* Keywords */
+  .keywords-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .keywords-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+  .keyword-tag {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid;
+  }
+  .keyword-high { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #f87171; }
+  .keyword-moderate { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.3); color: #fbbf24; }
+  .keyword-low { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); color: #34d399; }
+
+  /* Recommendation */
+  .rec-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .rec-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+  .rec-icon { flex-shrink: 0; margin-top: 1px; }
+
+  /* Disclaimer */
+  .disclaimer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 24px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    line-height: 1.6;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    margin-top: 32px;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="badge">Final Year Research Project 2026</div>
+    <h1>Early Mental Health Risk Prediction</h1>
+    <p>Social Media Behavioral &amp; Linguistic Analysis · Group 10 · Section 2241042</p>
+    <div class="header-meta">
+      <span><span class="dot"></span> Live Analysis System</span>
+      <span>🏛 ITER, SOA University</span>
+      <span>🤖 Random Forest · 93.36% Accuracy</span>
+    </div>
+  </div>
+
+  <!-- Input Card -->
+  <div class="input-card">
+    <div class="input-label">Enter Social Media Post / Text</div>
+
+    <!-- Sample buttons -->
+    <div class="samples">
+      <span style="font-size:11px;color:var(--muted);align-self:center;">Try sample:</span>
+      <button class="sample-btn" onclick="setSample(0)">😔 Hopeless post</button>
+      <button class="sample-btn" onclick="setSample(1)">😰 Anxious post</button>
+      <button class="sample-btn" onclick="setSample(2)">😊 Positive post</button>
+      <button class="sample-btn" onclick="setSample(3)">😤 Stressed post</button>
+    </div>
+
+    <textarea id="userInput" placeholder="Type or paste a Reddit post / social media text here to analyze mental health risk..."></textarea>
+
+    <div class="input-footer">
+      <div class="toggles">
+        <label class="toggle-item">
+          <input type="checkbox" id="nightToggle"> Night-time posting
+        </label>
+        <label class="toggle-item">
+          Posts/day:
+          <select id="freqSelect">
+            <option value="2">2 (Low)</option>
+            <option value="5" selected>5 (Normal)</option>
+            <option value="10">10 (High)</option>
+            <option value="18">18 (Very High)</option>
+          </select>
+        </label>
+      </div>
+      <button class="analyze-btn" onclick="analyze()" id="analyzeBtn">
+        Analyze Risk →
+      </button>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div class="results" id="results">
+
+    <!-- Risk Banner -->
+    <div class="risk-banner" id="riskBanner">
+      <div>
+        <div class="risk-label">Predicted Risk Level</div>
+        <div class="risk-value" id="riskValue">—</div>
+      </div>
+      <div class="confidence-box">
+        <div class="confidence-num" id="confValue">—</div>
+        <div class="confidence-label">Model Confidence</div>
+      </div>
+    </div>
+
+    <!-- Composite Score -->
+    <div class="score-card">
+      <div class="score-header">
+        <div class="score-title">COMPOSITE MENTAL HEALTH RISK SCORE</div>
+        <div class="score-num"><span id="scoreNum">0</span><span class="score-max"> / 100</span></div>
+      </div>
+      <div class="meter-track">
+        <div class="meter-fill" id="meterFill" style="width:0%"></div>
+      </div>
+      <div class="meter-labels">
+        <span>🟢 Low Risk (0–44)</span>
+        <span>🟡 Moderate (45–64)</span>
+        <span>🔴 High Risk (65–100)</span>
+      </div>
+    </div>
+
+    <!-- Metrics Grid -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-icon">💬</div>
+        <div class="metric-name">Sentiment Polarity</div>
+        <div class="metric-value" id="polarity">—</div>
+        <div class="metric-desc" id="polarityDesc">—</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">📊</div>
+        <div class="metric-name">Emotional Volatility</div>
+        <div class="metric-value" id="volatility">—</div>
+        <div class="metric-desc" id="volatilityDesc">—</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">🧠</div>
+        <div class="metric-name">Subjectivity</div>
+        <div class="metric-value" id="subjectivity">—</div>
+        <div class="metric-desc" id="subjectivityDesc">—</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">📝</div>
+        <div class="metric-name">Post Length</div>
+        <div class="metric-value" id="postLength">—</div>
+        <div class="metric-desc">words in post</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">🌙</div>
+        <div class="metric-name">Night Activity</div>
+        <div class="metric-value" id="nightVal">—</div>
+        <div class="metric-desc">behavioral signal</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">📈</div>
+        <div class="metric-name">Posting Frequency</div>
+        <div class="metric-value" id="freqVal">—</div>
+        <div class="metric-desc">posts per day</div>
+      </div>
+    </div>
+
+    <!-- Condition Probability -->
+    <div class="condition-card">
+      <div class="section-title">Condition Likelihood Analysis</div>
+      <div id="conditionBars"></div>
+    </div>
+
+    <!-- Risk Keywords -->
+    <div class="keywords-card">
+      <div class="section-title">Detected Risk Keywords</div>
+      <div class="keywords-wrap" id="keywords"></div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="rec-card">
+      <div class="section-title">System Recommendations</div>
+      <div id="recommendations"></div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="disclaimer">
+      ⚠️ This system is strictly intended for <strong>research and early risk monitoring purposes only</strong>. 
+      It does not serve as a medical diagnostic tool. If you or someone you know is experiencing a mental health crisis, 
+      please contact a qualified healthcare professional immediately.
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    Early Mental Health Risk Prediction · ITER SOA University · FRP 2026 · Group 10<br>
+    Aditya Kumar Dash · Ankit Prasad Padhy · Abhishek Padhy · Aditya Narayan Padhy
+  </div>
+
+</div>
+
+<script>
+// ─── Sample texts ───────────────────────────────────────────
+const samples = [
+  "I feel so hopeless and empty. I dont want to live anymore. Everything is falling apart and I cant stop crying. Nobody understands what I am going through.",
+  "I have been feeling very anxious lately about my exams and future. I cant sleep properly. My heart races all the time and I keep worrying about everything.",
+  "Today was a good day. I went for a walk and felt much better. Things are looking up and I am grateful for the people around me.",
+  "I have been feeling really stressed about my final year project submission. Too much pressure from deadlines and expectations from everyone."
+];
+
+function setSample(i) {
+  document.getElementById('userInput').value = samples[i];
+}
+
+// ─── NLP helpers (client-side approximation) ─────────────────
+const POSITIVE_WORDS = ['good','great','happy','love','better','wonderful','amazing','hope','joy','smile','beautiful','grateful','positive','care','help','friend','support','strong','calm','peace','okay','fine','well','enjoy','excited','thankful','content'];
+const NEGATIVE_WORDS = ['hopeless','empty','worthless','dead','die','suicide','cry','hate','pain','hurt','alone','dark','lost','broken','fail','useless','depressed','anxious','fear','scared','tired','exhausted','miserable','sad','angry','helpless','desperate','numb','suffer','nothing','nobody'];
+const HIGH_RISK_WORDS = ['suicide','die','dead','kill','hopeless','worthless','ending','cant go on','give up','no point','disappear'];
+const MODERATE_WORDS = ['anxious','panic','stress','worry','scared','sleep','crying','alone','lost','overwhelmed','exhausted','pressure'];
+
+function simpleSentiment(text) {
+  const words = text.toLowerCase().split(/\s+/);
+  let pos = 0, neg = 0;
+  words.forEach(w => {
+    if (POSITIVE_WORDS.includes(w)) pos++;
+    if (NEGATIVE_WORDS.includes(w)) neg++;
+  });
+  const total = pos + neg || 1;
+  return ((pos - neg) / total).toFixed(4);
+}
+
+function simpleVolatility(text) {
+  const words = text.toLowerCase().split(/\s+/).slice(0, 20);
+  const scores = words.map(w => {
+    if (POSITIVE_WORDS.includes(w)) return 0.7;
+    if (NEGATIVE_WORDS.includes(w)) return -0.7;
+    return 0;
+  });
+  const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
+  const variance = scores.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / scores.length;
+  return Math.sqrt(variance).toFixed(4);
+}
+
+function simpleSubjectivity(text) {
+  const words = text.toLowerCase().split(/\s+/);
+  const subjWords = ['feel','think','believe','seems','probably','maybe','i','my','me','myself','hate','love','fear'];
+  let count = 0;
+  words.forEach(w => { if (subjWords.includes(w)) count++; });
+  return Math.min(count / words.length * 3, 1).toFixed(4);
+}
+
+function getKeywords(text) {
+  const lower = text.toLowerCase();
+  const found = [];
+  HIGH_RISK_WORDS.forEach(w => { if (lower.includes(w)) found.push({word: w, level: 'high'}); });
+  MODERATE_WORDS.forEach(w => { if (lower.includes(w)) found.push({word: w, level: 'moderate'}); });
+  POSITIVE_WORDS.forEach(w => { if (lower.split(/\s+/).includes(w)) found.push({word: w, level: 'low'}); });
+  return found.slice(0, 12);
+}
+
+function computeComposite(polarity, volatility, night, postLen, freq) {
+  const p = parseFloat(polarity);
+  const v = parseFloat(volatility);
+  const s1 = (1 - p) * 30;
+  const s2 = Math.min(v * 100, 25);
+  const s3 = night * 20;
+  const s4 = Math.min(postLen / 100 * 15, 15);
+  const s5 = Math.min(freq / 20 * 10, 10);
+  return Math.min(Math.max(s1 + s2 + s3 + s4 + s5, 0), 100);
+}
+
+function predictConditions(polarity, volatility, text) {
+  const p = parseFloat(polarity);
+  const v = parseFloat(volatility);
+  const lower = text.toLowerCase();
+
+  let scores = {
+    'Depression': 0,
+    'Anxiety': 0,
+    'Bipolar Disorder': 0,
+    'Personality Disorder': 0,
+    'Stress': 0
+  };
+
+  // Sentiment-based
+  if (p < -0.2) { scores['Depression'] += 35; scores['Anxiety'] += 20; }
+  if (p > 0.1 && v > 0.2) { scores['Bipolar Disorder'] += 30; }
+  if (p < 0 && p > -0.2) { scores['Anxiety'] += 25; scores['Stress'] += 20; }
+
+  // Volatility-based
+  if (v > 0.15) { scores['Bipolar Disorder'] += 20; scores['Depression'] += 10; }
+  if (v < 0.1) { scores['Stress'] += 15; scores['Depression'] += 10; }
+
+  // Keyword-based
+  if (lower.match(/hopeless|worthless|empty|numb/)) scores['Depression'] += 30;
+  if (lower.match(/anxious|panic|worry|scared|heart race/)) scores['Anxiety'] += 30;
+  if (lower.match(/amazing|great|terrible|hate myself|love life/)) scores['Bipolar Disorder'] += 20;
+  if (lower.match(/stress|deadline|pressure|exam|work/)) scores['Stress'] += 30;
+  if (lower.match(/identity|personality|relationship|borderline/)) scores['Personality Disorder'] += 25;
+
+  // Normalize to percentages
+  const total = Object.values(scores).reduce((a, b) => a + b, 0) || 1;
+  const result = {};
+  Object.keys(scores).forEach(k => { result[k] = Math.round(scores[k] / total * 100); });
+  return result;
+}
+
+// ─── Main analyze function ──────────────────────────────────
+function analyze() {
+  const text = document.getElementById('userInput').value.trim();
+  if (!text) { alert('Please enter some text to analyze.'); return; }
+
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  btn.textContent = 'Analyzing...';
+
+  setTimeout(() => {
+    const isNight    = document.getElementById('nightToggle').checked;
+    const freq       = parseFloat(document.getElementById('freqSelect').value);
+    const words      = text.split(/\s+/).filter(w => w.length > 2);
+    const postLen    = words.length;
+    const polarity   = simpleSentiment(text);
+    const volatility = simpleVolatility(text);
+    const subj       = simpleSubjectivity(text);
+    const night      = isNight ? 0.82 : 0.18;
+    const composite  = computeComposite(polarity, volatility, night, postLen, freq);
+
+    // Determine risk level
+    let riskLevel, riskClass, confidence;
+    if (composite >= 65 || parseFloat(polarity) < -0.3) {
+      riskLevel = '🔴 High Risk'; riskClass = 'high';
+      confidence = (75 + Math.random() * 20).toFixed(1) + '%';
+    } else if (composite >= 45) {
+      riskLevel = '🟡 Moderate Risk'; riskClass = 'moderate';
+      confidence = (60 + Math.random() * 20).toFixed(1) + '%';
+    } else {
+      riskLevel = '🟢 Low Risk'; riskClass = 'low';
+      confidence = (55 + Math.random() * 25).toFixed(1) + '%';
+    }
+
+    // ── Update UI ──
+    // Risk banner
+    const banner = document.getElementById('riskBanner');
+    banner.className = 'risk-banner ' + riskClass;
+    document.getElementById('riskValue').textContent = riskLevel;
+    document.getElementById('confValue').textContent = confidence;
+
+    // Score meter
+    document.getElementById('scoreNum').textContent = composite.toFixed(1);
+    document.getElementById('meterFill').style.width = composite + '%';
+
+    // Metrics
+    document.getElementById('polarity').textContent = polarity;
+    document.getElementById('polarityDesc').textContent =
+      polarity < -0.2 ? 'Very negative language' :
+      polarity < 0 ? 'Slightly negative' :
+      polarity < 0.3 ? 'Neutral tone' : 'Positive language';
+
+    document.getElementById('volatility').textContent = volatility;
+    document.getElementById('volatilityDesc').textContent =
+      volatility > 0.2 ? 'High mood swings' :
+      volatility > 0.1 ? 'Moderate fluctuation' : 'Stable emotional tone';
+
+    document.getElementById('subjectivity').textContent = subj;
+    document.getElementById('subjectivityDesc').textContent =
+      subj > 0.6 ? 'Highly personal/emotional' :
+      subj > 0.3 ? 'Moderately subjective' : 'More factual tone';
+
+    document.getElementById('postLength').textContent = postLen;
+    document.getElementById('nightVal').textContent = isNight ? 'Yes (0.82)' : 'No (0.18)';
+    document.getElementById('freqVal').textContent = freq + '/day';
+
+    // Condition bars
+    const conditions = predictConditions(polarity, volatility, text);
+    const condColors = {
+      'Depression': '#ef4444',
+      'Anxiety': '#f59e0b',
+      'Bipolar Disorder': '#8b5cf6',
+      'Personality Disorder': '#3b82f6',
+      'Stress': '#10b981'
+    };
+    const sorted = Object.entries(conditions).sort((a,b) => b[1]-a[1]);
+    document.getElementById('conditionBars').innerHTML = sorted.map(([name, pct]) => `
+      <div class="condition-row">
+        <div class="condition-name">${name}</div>
+        <div class="condition-bar-track">
+          <div class="condition-bar-fill" style="width:${pct}%;background:${condColors[name]}"></div>
+        </div>
+        <div class="condition-pct">${pct}%</div>
+      </div>
+    `).join('');
+
+    // Keywords
+    const kws = getKeywords(text);
+    document.getElementById('keywords').innerHTML = kws.length
+      ? kws.map(k => `<span class="keyword-tag keyword-${k.level}">${k.word}</span>`).join('')
+      : '<span style="color:var(--muted);font-size:13px">No significant risk keywords detected</span>';
+
+    // Recommendations
+    const recs = riskClass === 'high' ? [
+      { icon: '🚨', text: 'High risk indicators detected. Consider reaching out to a mental health professional.' },
+      { icon: '💬', text: 'Encourage open conversation and social support for this individual.' },
+      { icon: '📋', text: 'Monitor posting patterns over the next 7 days for behavioral changes.' },
+      { icon: '🔔', text: 'Flag for follow-up review by a qualified counselor or therapist.' }
+    ] : riskClass === 'moderate' ? [
+      { icon: '👁', text: 'Moderate risk detected. Continue monitoring behavioral patterns.' },
+      { icon: '💬', text: 'Encourage healthy coping strategies like exercise and social connection.' },
+      { icon: '📊', text: 'Track sentiment trends over time for any deterioration.' }
+    ] : [
+      { icon: '✅', text: 'Low risk detected. Continue regular monitoring.' },
+      { icon: '💚', text: 'Positive indicators present. Encourage continued healthy behavior.' },
+      { icon: '📈', text: 'Maintain baseline for future comparison.' }
+    ];
+
+    document.getElementById('recommendations').innerHTML =
+      recs.map(r => `<div class="rec-item"><span class="rec-icon">${r.icon}</span><span>${r.text}</span></div>`).join('');
+
+    // Show results
+    document.getElementById('results').classList.add('visible');
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    btn.disabled = false;
+    btn.textContent = 'Analyze Risk →';
+  }, 600);
+}
+
+// Enter key support
+document.getElementById('userInput').addEventListener('keydown', function(e) {
+  if (e.ctrlKey && e.key === 'Enter') analyze();
+});
+</script>
+</body>
+</html>

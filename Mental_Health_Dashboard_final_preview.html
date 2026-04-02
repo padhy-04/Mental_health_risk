@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mental Health Risk Dashboard - Flask API</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #0a0e1a; color: #e8eaf0; margin: 0; padding: 24px; }
+  .container { max-width: 900px; margin: 0 auto; }
+  .header { text-align: center; margin-bottom: 28px; }
+  .header h1 { font-size: 24px; color: #fff; margin-bottom: 6px; }
+  .header p { color: #6b7280; font-size: 13px; }
+  .api-status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 14px; border-radius: 20px; font-size: 11px; margin-top: 10px; border: 1px solid; }
+  .api-status.online { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); color: #10b981; }
+  .api-status.offline { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #ef4444; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; display: inline-block; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .card { background: #111827; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 20px 24px; margin-bottom: 16px; }
+  .lbl { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #6b7280; margin-bottom: 8px; display: block; }
+  .samples { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .sample { background: #1a2235; border: 1px solid rgba(255,255,255,0.08); color: #6b7280; border-radius: 20px; padding: 4px 10px; font-size: 11px; cursor: pointer; }
+  .sample:hover { color: #e8eaf0; }
+  textarea { width: 100%; background: #1a2235; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; color: #e8eaf0; font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; padding: 12px 14px; resize: none; outline: none; height: 90px; box-sizing: border-box; }
+  .row { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; gap: 10px; flex-wrap: wrap; }
+  .toggles { display: flex; gap: 14px; align-items: center; }
+  .toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6b7280; cursor: pointer; }
+  select { background: #1a2235; border: 1px solid rgba(255,255,255,0.08); color: #e8eaf0; font-size: 12px; padding: 4px 8px; border-radius: 6px; }
+  .btn { background: #6366f1; color: #fff; border: none; border-radius: 10px; padding: 10px 24px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn:hover { background: #4f46e5; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .results { display: none; }
+  .results.show { display: block; }
+  .banner { border-radius: 14px; padding: 18px 22px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; border: 1px solid; flex-wrap: wrap; gap: 10px; }
+  .banner.high { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); }
+  .banner.moderate { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.3); }
+  .banner.low { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); }
+  .risk-lbl { font-size: 11px; color: #6b7280; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+  .risk-val { font-size: 22px; font-weight: 600; }
+  .banner.high .risk-val { color: #ef4444; }
+  .banner.moderate .risk-val { color: #f59e0b; }
+  .banner.low .risk-val { color: #10b981; }
+  .conf-num { font-size: 20px; font-weight: 600; font-family: monospace; }
+  .conf-lbl { font-size: 11px; color: #6b7280; }
+  .model-badge { background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); color: #818cf8; font-size: 10px; padding: 3px 10px; border-radius: 20px; margin-top: 6px; display: inline-block; }
+  .score-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .score-title { font-size: 11px; color: #6b7280; letter-spacing: 1px; text-transform: uppercase; }
+  .score-num { font-size: 28px; font-weight: 600; font-family: monospace; }
+  .meter { background: #1a2235; border-radius: 99px; height: 8px; overflow: hidden; margin-bottom: 6px; }
+  .meter-fill { height: 100%; border-radius: 99px; transition: width 0.8s ease; }
+  .meter-fill.high { background: #ef4444; }
+  .meter-fill.moderate { background: #f59e0b; }
+  .meter-fill.low { background: #10b981; }
+  .meter-labels { display: flex; justify-content: space-between; font-size: 10px; color: #6b7280; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  .metric { background: #1a2235; border-radius: 10px; padding: 12px 14px; }
+  .metric-name { font-size: 10px; color: #6b7280; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 4px; }
+  .metric-val { font-size: 17px; font-weight: 600; font-family: monospace; }
+  .metric-desc { font-size: 10px; color: #6b7280; margin-top: 2px; }
+  .section-title { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #6b7280; margin-bottom: 12px; font-weight: 500; }
+  .cond-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .cond-name { font-size: 12px; width: 140px; flex-shrink: 0; }
+  .cond-track { flex: 1; background: #1a2235; border-radius: 99px; height: 5px; overflow: hidden; }
+  .cond-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
+  .cond-pct { font-size: 11px; font-family: monospace; color: #6b7280; width: 30px; text-align: right; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; border: 1px solid; }
+  .tag.high { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #f87171; }
+  .tag.moderate { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.3); color: #fbbf24; }
+  .tag.low { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); color: #34d399; }
+  .rec { display: flex; gap: 8px; margin-bottom: 8px; font-size: 12px; color: #6b7280; line-height: 1.5; }
+  .error-box { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #f87171; padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 14px; display: none; }
+  .disclaimer { font-size: 10px; color: #6b7280; text-align: center; padding: 10px; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; margin-top: 14px; line-height: 1.6; }
+  .footer { text-align: center; margin-top: 28px; font-size: 11px; color: #6b7280; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Mental Health Risk Prediction Dashboard</h1>
+    <p>Powered by trained Random Forest model · 93.36% accuracy · 507 features · Flask REST API</p>
+    <div id="apiStatus" class="api-status offline">
+      <span class="dot"></span>
+      <span id="apiStatusText">Checking API connection...</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="lbl">Enter social media post text</span>
+    <div class="samples">
+      <span style="font-size:10px;color:#6b7280;align-self:center">Try:</span>
+      <button class="sample" onclick="setSample(0)">Hopeless post</button>
+      <button class="sample" onclick="setSample(1)">Anxious post</button>
+      <button class="sample" onclick="setSample(2)">Positive post</button>
+      <button class="sample" onclick="setSample(3)">Stressed post</button>
+    </div>
+    <textarea id="userInput" placeholder="Type or paste a Reddit post here to analyze mental health risk..."></textarea>
+    <div class="row">
+      <div class="toggles">
+        <label class="toggle"><input type="checkbox" id="nightToggle"> Night-time posting</label>
+        <label class="toggle">Posts/day:
+          <select id="freqSelect">
+            <option value="2">2 (Low)</option>
+            <option value="5" selected>5 (Normal)</option>
+            <option value="10">10 (High)</option>
+            <option value="18">18 (Very High)</option>
+          </select>
+        </label>
+      </div>
+      <button class="btn" id="analyzeBtn" onclick="analyze()">Analyze Risk</button>
+    </div>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <div class="results" id="results">
+    <div class="banner" id="banner">
+      <div>
+        <div class="risk-lbl">Predicted risk level</div>
+        <div class="risk-val" id="riskVal">—</div>
+        <div><span class="model-badge">Random Forest · Real ML Model · 93.36% Accuracy</span></div>
+      </div>
+      <div style="text-align:right">
+        <div class="conf-num" id="confVal">—</div>
+        <div class="conf-lbl">Model confidence</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="score-top">
+        <span class="score-title">Composite mental health risk score</span>
+        <span class="score-num"><span id="scoreNum">0</span><span style="font-size:14px;color:#6b7280"> / 100</span></span>
+      </div>
+      <div class="meter"><div class="meter-fill" id="meterFill" style="width:0%"></div></div>
+      <div class="meter-labels"><span>Low (0-44)</span><span>Moderate (45-64)</span><span>High (65-100)</span></div>
+    </div>
+
+    <div class="grid">
+      <div class="metric"><div class="metric-name">Sentiment polarity</div><div class="metric-val" id="polarity">-</div><div class="metric-desc" id="polDesc">-</div></div>
+      <div class="metric"><div class="metric-name">Emotional volatility</div><div class="metric-val" id="volatility">-</div><div class="metric-desc" id="volDesc">-</div></div>
+      <div class="metric"><div class="metric-name">Subjectivity</div><div class="metric-val" id="subjectivity">-</div><div class="metric-desc" id="subjDesc">-</div></div>
+      <div class="metric"><div class="metric-name">Post length</div><div class="metric-val" id="postLen">-</div><div class="metric-desc">words</div></div>
+      <div class="metric"><div class="metric-name">Night activity</div><div class="metric-val" id="nightVal">-</div><div class="metric-desc">behavioral signal</div></div>
+      <div class="metric"><div class="metric-name">Posting frequency</div><div class="metric-val" id="freqVal">-</div><div class="metric-desc">posts/day</div></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Condition likelihood</div>
+      <div id="condBars"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Detected risk keywords</div>
+      <div class="tags" id="keywords"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">System recommendations</div>
+      <div id="recs"></div>
+    </div>
+
+    <div class="disclaimer">This system is strictly for research and early risk monitoring purposes only. It does not serve as a medical diagnostic tool.</div>
+  </div>
+
+  <div class="footer">
+    Early Mental Health Risk Prediction · ITER SOA University · FRP 2026 · Group 10<br>
+    Aditya Kumar Dash · Ankit Prasad Padhy · Abhishek Padhy · Aditya Narayan Padhy
+  </div>
+</div>
+
+<script>
+const API = "http://127.0.0.1:5000";
+const SAMPLES = [
+  "I feel so hopeless and empty. I dont want to live anymore. Everything is falling apart and I cant stop crying.",
+  "I have been feeling very anxious lately about my exams and future. I cant sleep properly at all.",
+  "Today was a good day. I went for a walk and felt much better. Things are looking up.",
+  "I have been feeling really stressed about my final year project submission deadline."
+];
+const HIGH_KW = ["hopeless","worthless","die","suicide","empty","numb","ending","disappear"];
+const MOD_KW  = ["anxious","panic","stress","worry","scared","sleep","crying","alone","lost","overwhelmed"];
+const POS_KW  = ["good","great","happy","love","better","grateful","positive","calm","hope"];
+const COND_COL = {Depression:"#ef4444",Anxiety:"#f59e0b","Bipolar Disorder":"#8b5cf6","Personality Disorder":"#3b82f6",Stress:"#10b981"};
+
+function setSample(i){ document.getElementById("userInput").value=SAMPLES[i]; }
+
+async function checkAPI(){
+  try{
+    const r=await fetch(API+"/health");
+    const d=await r.json();
+    const el=document.getElementById("apiStatus");
+    el.className="api-status online";
+    document.getElementById("apiStatusText").textContent="Flask API connected · "+d.model+" · "+d.accuracy;
+  }catch(e){
+    const el=document.getElementById("apiStatus");
+    el.className="api-status offline";
+    document.getElementById("apiStatusText").textContent="API offline — run: python app.py in terminal";
+  }
+}
+
+function getKeywords(text){
+  const l=text.toLowerCase(),out=[];
+  HIGH_KW.forEach(k=>{if(l.includes(k))out.push({w:k,t:"high"})});
+  MOD_KW.forEach(k=>{if(l.includes(k))out.push({w:k,t:"moderate"})});
+  POS_KW.forEach(k=>{if(l.split(/\s+/).includes(k))out.push({w:k,t:"low"})});
+  return out.slice(0,10);
+}
+
+function getConditions(text,polarity){
+  const l=text.toLowerCase(),p=parseFloat(polarity);
+  const s={Depression:10,Anxiety:10,"Bipolar Disorder":10,"Personality Disorder":10,Stress:10};
+  if(p<-0.2){s.Depression+=35;s.Anxiety+=15;}
+  if(l.match(/hopeless|worthless|empty|numb/))s.Depression+=30;
+  if(l.match(/anxi|panic|worry|scared/))s.Anxiety+=30;
+  if(l.match(/stress|deadline|pressure|exam/))s.Stress+=30;
+  if(l.match(/identity|borderline/))s["Personality Disorder"]+=25;
+  const tot=Object.values(s).reduce((a,b)=>a+b,0);
+  const r={};Object.keys(s).forEach(k=>{r[k]=Math.round(s[k]/tot*100)});
+  return r;
+}
+
+async function analyze(){
+  const text=document.getElementById("userInput").value.trim();
+  if(!text){alert("Please enter some text.");return;}
+  const btn=document.getElementById("analyzeBtn");
+  btn.disabled=true; btn.textContent="Analyzing...";
+  document.getElementById("errorBox").style.display="none";
+
+  try{
+    const response=await fetch(API+"/predict",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        text:text,
+        is_night:document.getElementById("nightToggle").checked,
+        posts_per_day:parseFloat(document.getElementById("freqSelect").value)
+      })
+    });
+    const d=await response.json();
+    if(d.error)throw new Error(d.error);
+
+    const score=d.composite_score;
+    const rc=score>=65?"high":score>=45?"moderate":"low";
+    const rv=rc==="high"?"High Risk":rc==="moderate"?"Moderate Risk":"Low Risk";
+
+    document.getElementById("banner").className="banner "+rc;
+    document.getElementById("riskVal").textContent=rv;
+    document.getElementById("confVal").textContent=d.confidence+"%";
+    document.getElementById("scoreNum").textContent=score;
+    const fill=document.getElementById("meterFill");
+    fill.style.width=score+"%";
+    fill.className="meter-fill "+rc;
+
+    document.getElementById("polarity").textContent=d.sentiment_polarity;
+    document.getElementById("polDesc").textContent=d.sentiment_polarity<-0.2?"Very negative":d.sentiment_polarity<0?"Slightly negative":"Positive";
+    document.getElementById("volatility").textContent=d.emotional_volatility;
+    document.getElementById("volDesc").textContent=d.emotional_volatility>0.2?"High mood swings":"Stable";
+    document.getElementById("subjectivity").textContent=d.subjectivity;
+    document.getElementById("subjDesc").textContent=d.subjectivity>0.6?"Highly personal":"Moderate";
+    document.getElementById("postLen").textContent=d.post_length;
+    document.getElementById("nightVal").textContent=document.getElementById("nightToggle").checked?"Yes":"No";
+    document.getElementById("freqVal").textContent=d.posting_frequency+"/day";
+
+    const conds=getConditions(text,d.sentiment_polarity);
+    const sorted=Object.entries(conds).sort((a,b)=>b[1]-a[1]);
+    document.getElementById("condBars").innerHTML=sorted.map(([n,p])=>`
+      <div class="cond-row">
+        <div class="cond-name">${n}</div>
+        <div class="cond-track"><div class="cond-fill" style="width:${p}%;background:${COND_COL[n]}"></div></div>
+        <div class="cond-pct">${p}%</div>
+      </div>`).join("");
+
+    const kws=getKeywords(text);
+    document.getElementById("keywords").innerHTML=kws.length
+      ?kws.map(k=>`<span class="tag ${k.t}">${k.w}</span>`).join("")
+      :"<span style='font-size:12px;color:#6b7280'>No significant risk keywords detected</span>";
+
+    const recs=rc==="high"?[
+      {i:"!",t:"High risk indicators detected. Consider professional mental health support."},
+      {i:"*",t:"Monitor posting patterns over 7 days for behavioral changes."},
+      {i:">",t:"Encourage open conversation and social support."}
+    ]:rc==="moderate"?[
+      {i:"~",t:"Moderate risk detected. Continue monitoring behavioral patterns."},
+      {i:"*",t:"Encourage healthy coping strategies like exercise and social connection."}
+    ]:[
+      {i:"+",t:"Low risk detected. Continue regular monitoring."},
+      {i:"*",t:"Positive indicators present. Encourage continued healthy behavior."}
+    ];
+    document.getElementById("recs").innerHTML=recs.map(r=>`<div class="rec"><span>[${r.i}]</span><span> ${r.t}</span></div>`).join("");
+
+    document.getElementById("results").classList.add("show");
+    document.getElementById("results").scrollIntoView({behavior:"smooth"});
+
+  }catch(err){
+    const eb=document.getElementById("errorBox");
+    eb.style.display="block";
+    eb.textContent="API Error: "+err.message+" — Make sure app.py is running on port 5000";
+  }
+  btn.disabled=false; btn.textContent="Analyze Risk";
+}
+
+checkAPI();
+setInterval(checkAPI,10000);
+document.getElementById("userInput").addEventListener("keydown",e=>{if(e.ctrlKey&&e.key==="Enter")analyze();});
+</script>
+</body>
+</html>

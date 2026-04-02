@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mental Health Risk Prediction - Project Report</title>
+<style>
+  body { font-family: Arial, sans-serif; font-size: 12pt; margin: 0; padding: 0; color: #000; }
+  .page { width: 210mm; margin: 0 auto; padding: 25mm 20mm; box-sizing: border-box; }
+  h1 { font-size: 16pt; text-align: center; font-weight: bold; margin-bottom: 4px; }
+  h2 { font-size: 13pt; font-weight: bold; border-bottom: 2px solid #1F4E79; color: #1F4E79; padding-bottom: 4px; margin-top: 24px; }
+  h3 { font-size: 12pt; font-weight: bold; margin-top: 16px; margin-bottom: 6px; }
+  p  { text-align: justify; line-height: 1.7; margin: 8px 0; }
+  .center { text-align: center; }
+  .header-box { border: 2px solid #1F4E79; padding: 16px 20px; margin-bottom: 24px; background: #EBF3FB; }
+  .header-box p { margin: 3px 0; font-size: 11pt; }
+  .header-box .title { font-size: 13pt; font-weight: bold; color: #1F4E79; margin-top: 8px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 11pt; }
+  th { background: #1F4E79; color: white; padding: 8px 10px; text-align: left; }
+  td { border: 1px solid #CCCCCC; padding: 7px 10px; }
+  tr:nth-child(even) td { background: #F2F7FC; }
+  .metric-box { display: inline-block; border: 1px solid #1F4E79; border-radius: 6px; padding: 10px 18px; margin: 6px; text-align: center; background: #EBF3FB; min-width: 100px; }
+  .metric-box .val { font-size: 18pt; font-weight: bold; color: #1F4E79; }
+  .metric-box .lbl { font-size: 9pt; color: #444; }
+  .metrics-row { text-align: center; margin: 16px 0; }
+  .section-tag { background: #1F4E79; color: white; padding: 2px 10px; border-radius: 3px; font-size: 10pt; margin-right: 8px; }
+  .highlight { background: #FFF3CD; border-left: 4px solid #FFC107; padding: 8px 12px; margin: 10px 0; }
+  .conclusion-box { background: #E8F5E9; border-left: 4px solid #388E3C; padding: 10px 14px; margin: 10px 0; }
+  ul { margin: 6px 0 10px 0; padding-left: 20px; line-height: 1.8; }
+  li { margin-bottom: 3px; }
+  .page-break { page-break-before: always; }
+  .footer-note { font-size: 9pt; color: #666; text-align: center; margin-top: 30px; border-top: 1px solid #ccc; padding-top: 8px; }
+  @media print {
+    body { margin: 0; }
+    .page { padding: 15mm 15mm; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Title Page -->
+  <div class="center" style="margin-bottom: 20px;">
+    <p style="font-size:13pt; font-weight:bold;">SIKSHA 'O' ANUSANDHAN</p>
+    <p style="font-size:11pt;">(Deemed to be University)</p>
+    <p style="font-size:12pt; font-weight:bold;">Faculty of Engineering &amp; Technology (ITER)</p>
+    <p style="font-size:12pt; font-weight:bold;">Department of Computer Science and Engineering</p>
+  </div>
+
+  <div class="header-box">
+    <p><strong>Section:</strong> 2241042 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <strong>Group No:</strong> 10</p>
+    <p class="title">Early Mental Health Risk Prediction using Social Media Behavioral and Linguistic Analysis</p>
+    <p style="margin-top:10px;"><strong>Final Year Research Project — 2026</strong></p>
+    <p style="margin-top:10px;"><strong>Group Members:</strong></p>
+    <p>1. Aditya Kumar Dash &nbsp;&nbsp;&nbsp; Reg. No: 2241004140</p>
+    <p>2. Ankit Prasad Padhy &nbsp;&nbsp;&nbsp; Reg. No: 2241016019</p>
+    <p>3. Abhishek Padhy &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Reg. No: 2241016016</p>
+    <p>4. Aditya Narayan Padhy &nbsp; Reg. No: 2241016018</p>
+  </div>
+
+  <!-- Abstract -->
+  <h2>1. Abstract</h2>
+  <p>Mental health disorders such as depression and anxiety are increasingly reflected in digital behavior, particularly on social media platforms where users frequently express thoughts, emotions, and daily experiences. Traditional artificial intelligence approaches for mental health detection primarily rely on single-post sentiment analysis, which often fails to capture gradual emotional deterioration and behavioral irregularities over time.</p>
+  <p>This research develops an AI-based early mental health risk prediction system that integrates behavioral, linguistic, and temporal indicators extracted from Reddit social media data. The system analyzes progression patterns such as posting frequency variation, night-time activity ratio, emotional volatility, and sentiment drift over time. These behavioral signals are combined with linguistic features derived using Natural Language Processing techniques, including TF-IDF vectorization and sentiment polarity scoring.</p>
+  <p>Machine learning algorithms including Logistic Regression and Random Forest are trained to classify users into risk categories. A novel Composite Mental Health Risk Score (0–100 scale) is introduced, integrating multiple weighted indicators into a unified and interpretable scoring framework. The Random Forest model achieved 93.36% accuracy and 98.75% ROC-AUC on the test dataset.</p>
+
+  <!-- Introduction -->
+  <h2>2. Introduction</h2>
+  <p>Mental health is one of the most critical yet underdiagnosed areas of healthcare globally. With millions of people turning to social media platforms to express their feelings and experiences, these platforms have become a rich source of behavioral and linguistic data that can serve as early warning signals for mental health deterioration.</p>
+  <p>This project addresses the gap in existing AI-based mental health detection systems by proposing a multi-dimensional, time-aware predictive framework. Unlike traditional single-post sentiment analysis systems, our approach captures temporal patterns in user behavior, combining linguistic features extracted via NLP with behavioral indicators such as posting frequency, night-time activity, and emotional volatility.</p>
+
+  <div class="highlight">
+    <strong>Research Objective:</strong> To build a scalable, interpretable early mental health risk prediction system using Reddit social media data, capable of identifying high-risk users through behavioral and linguistic pattern analysis.
+  </div>
+
+  <!-- Dataset -->
+  <h2>3. Dataset</h2>
+  <p>The dataset used in this research is the <strong>Reddit Mental Health Dataset</strong> sourced from Kaggle, containing 5,957 Reddit posts scraped from mental health-related subreddits. Each post includes the post body (text), post title, and a target label indicating the associated mental health condition.</p>
+
+  <table>
+    <tr><th>Target Label</th><th>Condition</th><th>Risk Level</th><th>Post Count</th></tr>
+    <tr><td>0</td><td>Stress</td><td>Moderate Risk</td><td>1,181</td></tr>
+    <tr><td>1</td><td>Depression</td><td>High Risk</td><td>1,202</td></tr>
+    <tr><td>2</td><td>Bipolar Disorder</td><td>High Risk</td><td>1,185</td></tr>
+    <tr><td>3</td><td>Personality Disorder</td><td>High Risk</td><td>1,201</td></tr>
+    <tr><td>4</td><td>Anxiety</td><td>Moderate Risk</td><td>1,188</td></tr>
+    <tr><td colspan="3"><strong>Total</strong></td><td><strong>5,957</strong></td></tr>
+  </table>
+
+  <!-- Methodology -->
+  <div class="page-break"></div>
+  <h2>4. Methodology</h2>
+
+  <h3>4.1 Data Preprocessing</h3>
+  <p>Raw Reddit posts were cleaned using the following NLP pipeline implemented with the NLTK library:</p>
+  <ul>
+    <li><strong>Lowercasing:</strong> All text converted to lowercase for uniformity</li>
+    <li><strong>URL Removal:</strong> HTTP/HTTPS links removed using regex patterns</li>
+    <li><strong>Special Character Removal:</strong> Punctuation and numbers removed</li>
+    <li><strong>Stopword Removal:</strong> Common English stopwords removed using NLTK corpus</li>
+    <li><strong>Lemmatization:</strong> Words reduced to root form using WordNetLemmatizer</li>
+  </ul>
+  <p>After preprocessing, post title and body were combined into a single <em>full_post</em> field, and all posts with empty cleaned text were removed, resulting in 5,946 usable records.</p>
+
+  <h3>4.2 Feature Extraction</h3>
+  <p>Seven features were engineered from the preprocessed text and behavioral patterns:</p>
+
+  <table>
+    <tr><th>Feature</th><th>Description</th><th>Tool Used</th></tr>
+    <tr><td>TF-IDF Vectors</td><td>500 word-level and bigram features</td><td>Scikit-learn</td></tr>
+    <tr><td>Sentiment Polarity</td><td>Overall post sentiment (-1 to +1)</td><td>TextBlob</td></tr>
+    <tr><td>Subjectivity Score</td><td>Degree of personal expression (0 to 1)</td><td>TextBlob</td></tr>
+    <tr><td>Emotional Volatility</td><td>Std deviation of word-level sentiments</td><td>NumPy, TextBlob</td></tr>
+    <tr><td>Post Length</td><td>Number of words in cleaned post</td><td>Pandas</td></tr>
+    <tr><td>Posting Frequency</td><td>Simulated behavioral posting rate</td><td>NumPy</td></tr>
+    <tr><td>Night-time Activity Ratio</td><td>Proportion of late-night posting activity</td><td>NumPy</td></tr>
+  </table>
+
+  <p>The final feature matrix combined all 507 features (500 TF-IDF + 7 behavioral) using a sparse matrix representation via SciPy.</p>
+
+  <h3>4.3 Composite Mental Health Risk Score</h3>
+  <p>A novel Composite Mental Health Risk Score (0–100) was developed as the key contribution of this research. The score integrates five weighted behavioral and linguistic indicators:</p>
+  <table>
+    <tr><th>Indicator</th><th>Weight</th><th>Justification</th></tr>
+    <tr><td>Sentiment Score</td><td>30%</td><td>Primary linguistic indicator of distress</td></tr>
+    <tr><td>Emotional Volatility</td><td>25%</td><td>Key signal for mood instability</td></tr>
+    <tr><td>Night-time Activity</td><td>20%</td><td>Behavioral sign of insomnia/depression</td></tr>
+    <tr><td>Post Length</td><td>15%</td><td>Longer posts indicate emotional distress</td></tr>
+    <tr><td>Posting Frequency</td><td>10%</td><td>Erratic posting = behavioral irregularity</td></tr>
+  </table>
+  <p>Average composite scores: High Risk users scored <strong>68.84/100</strong> vs Moderate Risk users at <strong>59.66/100</strong>, validating the scoring framework.</p>
+
+  <h3>4.4 Machine Learning Models</h3>
+  <p>Two classification algorithms were trained on an 80/20 train-test split (4,756 training / 1,190 testing posts):</p>
+  <ul>
+    <li><strong>Logistic Regression:</strong> Linear classifier with L2 regularization (C=1.0, max_iter=1000)</li>
+    <li><strong>Random Forest:</strong> Ensemble of 100 decision trees with max_depth=10</li>
+  </ul>
+
+  <!-- Results -->
+  <div class="page-break"></div>
+  <h2>5. Results and Evaluation</h2>
+
+  <h3>5.1 Model Performance Metrics</h3>
+  <table>
+    <tr><th>Metric</th><th>Logistic Regression</th><th>Random Forest</th></tr>
+    <tr><td>Accuracy</td><td>92.18%</td><td><strong>93.36%</strong></td></tr>
+    <tr><td>Precision</td><td>89.77%</td><td><strong>93.03%</strong></td></tr>
+    <tr><td>Recall</td><td>90.72%</td><td>90.08%</td></tr>
+    <tr><td>F1 Score</td><td>90.24%</td><td><strong>91.53%</strong></td></tr>
+    <tr><td>ROC-AUC</td><td>97.75%</td><td><strong>98.75%</strong></td></tr>
+  </table>
+
+  <div class="metrics-row">
+    <div class="metric-box"><div class="val">93.36%</div><div class="lbl">Accuracy</div></div>
+    <div class="metric-box"><div class="val">93.03%</div><div class="lbl">Precision</div></div>
+    <div class="metric-box"><div class="val">90.08%</div><div class="lbl">Recall</div></div>
+    <div class="metric-box"><div class="val">91.53%</div><div class="lbl">F1 Score</div></div>
+    <div class="metric-box"><div class="val">98.75%</div><div class="lbl">ROC-AUC</div></div>
+  </div>
+
+  <h3>5.2 Sentiment Analysis Findings</h3>
+  <table>
+    <tr><th>Condition</th><th>Avg Sentiment Polarity</th><th>Avg Emotional Volatility</th><th>Avg Post Length</th></tr>
+    <tr><td>Depression</td><td>-0.026</td><td>0.1681</td><td>80.0 words</td></tr>
+    <tr><td>Anxiety</td><td>-0.010</td><td>0.1501</td><td>74.3 words</td></tr>
+    <tr><td>Bipolar</td><td>+0.033</td><td>0.1459</td><td>70.3 words</td></tr>
+    <tr><td>Personality Disorder</td><td>+0.017</td><td>0.1445</td><td>75.8 words</td></tr>
+    <tr><td>Stress</td><td>+0.045</td><td>0.1303</td><td>67.3 words</td></tr>
+  </table>
+
+  <h3>5.3 Key Observations</h3>
+  <ul>
+    <li>Depression posts had the most negative sentiment (-0.026) and highest emotional volatility (0.1681)</li>
+    <li>Depression and Bipolar users showed the highest night-time activity ratio (~0.70)</li>
+    <li>Depression posts were longest on average (80 words), indicating higher emotional distress expression</li>
+    <li>Random Forest outperformed Logistic Regression across all metrics</li>
+    <li>ROC-AUC of 98.75% demonstrates excellent separation between High and Moderate Risk users</li>
+  </ul>
+
+  <h3>5.4 Visualizations Generated</h3>
+  <ul>
+    <li>Confusion Matrix — both models side by side</li>
+    <li>ROC Curve — comparative AUC for both models</li>
+    <li>Sentiment Drift Chart — average polarity and distribution by condition</li>
+    <li>Risk Score Distribution — composite scores across all conditions</li>
+    <li>Model Comparison Chart — all 5 metrics side by side</li>
+    <li>Rolling Average Temporal Analysis — 50-post rolling window trends</li>
+  </ul>
+
+  <!-- Conclusion -->
+  <div class="page-break"></div>
+  <h2>6. Conclusion</h2>
+  <div class="conclusion-box">
+    <p>This research successfully developed an AI-based early mental health risk prediction system using Reddit social media data. The system integrates behavioral, linguistic, and temporal indicators into a multi-dimensional framework that outperforms traditional single-metric approaches.</p>
+  </div>
+  <p>The Random Forest classifier achieved <strong>93.36% accuracy</strong> and <strong>98.75% ROC-AUC</strong>, demonstrating the effectiveness of the multi-dimensional feature approach. The novel Composite Mental Health Risk Score (0–100) provides an interpretable and unified framework for risk assessment.</p>
+  <p>Key contributions of this research include:</p>
+  <ul>
+    <li>A multi-dimensional feature engineering pipeline combining TF-IDF, sentiment polarity, emotional volatility, posting frequency, and night-time activity ratio</li>
+    <li>A novel Composite Mental Health Risk Score integrating five weighted behavioral and linguistic indicators</li>
+    <li>Comparative analysis of Logistic Regression and Random Forest algorithms showing superiority of ensemble methods</li>
+    <li>Rolling average temporal analysis demonstrating emotional trend patterns across mental health conditions</li>
+  </ul>
+  <p>This system is strictly intended for research and early risk monitoring purposes and does not serve as a medical diagnostic tool.</p>
+
+  <!-- Future Work -->
+  <h2>7. Future Work</h2>
+  <ul>
+    <li>Integration of deep learning models (BERT, LSTM) for improved NLP feature extraction</li>
+    <li>Use of real-time timestamped data for true temporal behavioral analysis</li>
+    <li>Expansion to multi-class risk prediction (Low / Moderate / High / Critical)</li>
+    <li>Development of a web-based dashboard for real-time risk monitoring</li>
+    <li>Inclusion of image and video content from social media posts</li>
+  </ul>
+
+  <!-- Software Specifications -->
+  <h2>8. Software Specifications</h2>
+  <table>
+    <tr><th>Category</th><th>Tools / Libraries Used</th></tr>
+    <tr><td>Programming Language</td><td>Python 3.14</td></tr>
+    <tr><td>Data Processing</td><td>Pandas 3.0.1, NumPy 2.4.3</td></tr>
+    <tr><td>Data Visualization</td><td>Matplotlib 3.10.8, Seaborn 0.13.2</td></tr>
+    <tr><td>NLP Processing</td><td>NLTK 3.9.4, TextBlob 0.19.0, Scikit-learn (TF-IDF)</td></tr>
+    <tr><td>Machine Learning</td><td>Scikit-learn 1.8.0</td></tr>
+    <tr><td>Development Environment</td><td>Jupyter Notebook 7.5.5</td></tr>
+    <tr><td>Dataset</td><td>Reddit Mental Health Dataset (Kaggle, 5957 posts)</td></tr>
+  </table>
+
+  <!-- References -->
+  <h2>9. References</h2>
+  <ul>
+    <li>Ghoshal, N. (2024). Reddit Mental Health Data. Kaggle Dataset.</li>
+    <li>Scikit-learn: Machine Learning in Python. Pedregosa et al., JMLR 12, 2011.</li>
+    <li>Bird, S., Klein, E., &amp; Loper, E. (2009). Natural Language Processing with Python. O'Reilly.</li>
+    <li>Loria, S. (2020). TextBlob Documentation. TextBlob 0.15.3.</li>
+    <li>Breiman, L. (2001). Random Forests. Machine Learning, 45(1), 5–32.</li>
+  </ul>
+
+  <div class="footer-note">
+    Early Mental Health Risk Prediction using Social Media Behavioral and Linguistic Analysis &nbsp;|&nbsp;
+    Section: 2241042 &nbsp;|&nbsp; Group No: 10 &nbsp;|&nbsp; ITER, SOA University &nbsp;|&nbsp; FRP 2026
+  </div>
+
+</div>
+</body>
+</html>
